@@ -1,0 +1,1372 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mapa Interativo do Loteamento - Quadra A (SVG Real)</title>
+  <style>
+    :root {
+      --bg: #eef3f9;
+      --card: #ffffff;
+      --text: #18212f;
+      --muted: #617086;
+      --border: #d7dee8;
+      --shadow: 0 18px 40px rgba(18, 32, 56, 0.12);
+      --shadow-soft: 0 10px 24px rgba(18, 32, 56, 0.08);
+      --primary: #07425f;
+      --primary-soft: #dbeafe;
+      --disp: #d9f7d9;
+      --disp-hover: #57c45f;
+      --res: #fff2c9;
+      --res-hover: #f4b400;
+      --vend: #f8d7da;
+      --vend-hover: #dc3545;
+      --radius: 18px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      height: 100%;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: linear-gradient(180deg, #f7f9fc 0%, #eaf0f8 100%);
+      color: var(--text);
+      font-family: Arial, Helvetica, sans-serif;
+    }
+
+    .page {
+      max-width: 1500px;
+      margin: 0 auto;
+      padding: 20px;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 360px;
+      gap: 20px;
+      align-items: start;
+    }
+
+    .card {
+      background: var(--card);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      border: 1px solid rgba(255, 255, 255, 0.6);
+    }
+
+    .map-card {
+      padding: 18px;
+      overflow: hidden;
+    }
+
+    .panel {
+      position: sticky;
+      top: 20px;
+      padding: 18px;
+      box-shadow: var(--shadow-soft);
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      align-items: flex-start;
+      margin-bottom: 14px;
+    }
+
+    .header h1,
+    .panel h2,
+    .panel h3 {
+      margin: 0;
+    }
+
+    .header p,
+    .muted,
+    .panel p {
+      margin: 6px 0 0;
+      color: var(--muted);
+      line-height: 1.45;
+    }
+
+    .counter-pill {
+      padding: 10px 12px;
+      border-radius: 999px;
+      background: #f3f7ff;
+      color: #1d4ed8;
+      border: 1px solid #dbe7ff;
+      font-weight: 700;
+      font-size: 13px;
+      white-space: nowrap;
+    }
+
+    .toolbar {
+      display: grid;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .toolbar-row {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .search-wrap {
+      position: relative;
+      flex: 1 1 320px;
+      min-width: 220px;
+    }
+
+    .search-wrap input {
+      width: 100%;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 13px 14px;
+      font-size: 15px;
+      outline: none;
+      background: #fbfcfe;
+    }
+
+    .search-wrap input:focus {
+      border-color: #9dbcf9;
+      box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
+    }
+
+    .suggestions {
+      position: absolute;
+      top: calc(100% + 8px);
+      left: 0;
+      right: 0;
+      z-index: 20;
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      box-shadow: var(--shadow-soft);
+      display: none;
+      max-height: 240px;
+      overflow: auto;
+    }
+
+    .suggestion-item {
+      padding: 11px 14px;
+      cursor: pointer;
+      display: grid;
+      gap: 2px;
+    }
+
+    .suggestion-item:hover,
+    .suggestion-item.active {
+      background: #f3f7ff;
+    }
+
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .chip,
+    .btn {
+      border: 1px solid var(--border);
+      background: #fff;
+      color: var(--text);
+      border-radius: 999px;
+      padding: 10px 14px;
+      cursor: pointer;
+      font-weight: 700;
+      transition: 0.2s ease;
+      font-size: 13px;
+    }
+
+    .chip:hover,
+    .btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 8px 20px rgba(18, 32, 56, 0.08);
+    }
+
+    .chip.active {
+      background: var(--primary-soft);
+      color: #1d4ed8;
+      border-color: #b8d1ff;
+    }
+
+    .btn.primary {
+      background: var(--primary);
+      color: #fff;
+      border-color: var(--primary);
+    }
+
+    .btn.ghost {
+      background: #f8fbff;
+    }
+
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .legend span {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+    }
+
+    .swatch {
+      width: 14px;
+      height: 14px;
+      border-radius: 4px;
+      border: 1px solid rgba(0, 0, 0, 0.08);
+      display: inline-block;
+    }
+
+    .viewport {
+      position: relative;
+      height: min(74vh, 860px);
+      min-height: 460px;
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      background:
+        radial-gradient(circle at top left, rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0)),
+        linear-gradient(180deg, #f8fbff 0%, #edf3fa 100%);
+      overflow: hidden;
+      touch-action: none;
+      user-select: none;
+    }
+
+    .svg-stage {
+      position: absolute;
+      inset: 0;
+      transform-origin: 0 0;
+      cursor: grab;
+      will-change: transform;
+    }
+
+    .svg-stage.dragging {
+      cursor: grabbing;
+    }
+
+    svg {
+      width: 1040.84px;
+      height: 1163.16px;
+      display: block;
+    }
+
+    .map-title {
+      font-size: 38px;
+      font-weight: 800;
+      fill: #6d7f95;
+      letter-spacing: 1px;
+    }
+
+    .map-subtitle {
+      font-size: 18px;
+      font-weight: 700;
+      fill: #8997ab;
+    }
+
+    .map-bg-label {
+      font-size: 14px;
+      fill: #7b8ca1;
+      font-weight: 700;
+      opacity: 0.85;
+    }
+
+    .map-lot {
+      cursor: pointer;
+      stroke: #334155;
+      stroke-width: 1.6;
+      vector-effect: non-scaling-stroke;
+      transition: fill 0.18s ease, opacity 0.18s ease, filter 0.18s ease, stroke 0.18s ease;
+    }
+
+    .map-lot.disponivel {
+      fill: var(--disp) !important;
+    }
+
+    .map-lot.reservado {
+      fill: var(--res) !important;
+    }
+
+    .map-lot.vendido {
+      fill: var(--vend) !important;
+    }
+
+    .map-lot.hover.disponivel {
+      fill: var(--disp-hover) !important;
+    }
+
+    .map-lot.hover.reservado {
+      fill: var(--res-hover) !important;
+    }
+
+    .map-lot.hover.vendido {
+      fill: var(--vend-hover) !important;
+    }
+
+    .map-lot.muted {
+      opacity: 0.2;
+    }
+
+    .map-lot.selected {
+      stroke: var(--primary);
+      stroke-width: 2.5;
+      filter: drop-shadow(0 6px 12px rgba(37, 99, 235, 0.24));
+    }
+
+    .lot-label {
+      font-size: 11px;
+      font-weight: 800;
+      fill: #1f2937;
+      pointer-events: none;
+      text-anchor: middle;
+      dominant-baseline: middle;
+      user-select: none;
+    }
+
+    .lot-label.muted {
+      opacity: 0.22;
+    }
+
+    .status-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin: 14px 0 18px;
+    }
+
+    .status-card {
+      min-height: 104px;
+      border-radius: 16px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      text-align: center;
+      border: 1px solid rgba(0, 0, 0, 0.05);
+    }
+
+    .status-card small {
+      font-size: 12px;
+      font-weight: 700;
+      color: rgba(24, 33, 47, 0.8);
+    }
+
+    .status-card strong {
+      font-size: 34px;
+      line-height: 1;
+    }
+
+    .status-card.disponivel {
+      background: var(--disp);
+    }
+
+    .status-card.reservado {
+      background: var(--res);
+    }
+
+    .status-card.vendido {
+      background: var(--vend);
+    }
+
+    .selection-summary {
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      background: #f9fbff;
+      padding: 12px 14px;
+      display: grid;
+      gap: 6px;
+      margin-bottom: 16px;
+    }
+
+    .details-box {
+      border-top: 1px solid #e7edf6;
+      padding-top: 18px;
+      display: grid;
+      gap: 14px;
+    }
+
+    .details-image {
+      width: 100%;
+      border-radius: 16px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      background: #f4f7fb;
+      min-height: 210px;
+    }
+
+    .details-image img {
+      width: 100%;
+      height: 100%;
+      min-height: 210px;
+      object-fit: cover;
+      display: block;
+    }
+
+    .details-header {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: flex-start;
+    }
+
+    .status-pill {
+      padding: 7px 12px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .details-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .metric {
+      background: #f7faff;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 10px 12px;
+      display: grid;
+      gap: 4px;
+    }
+
+    .metric small {
+      color: var(--muted);
+      font-weight: 700;
+    }
+
+    .metric strong {
+      font-size: 16px;
+    }
+
+    .description-box {
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 12px;
+      background: #fff;
+      line-height: 1.5;
+    }
+
+    .empty-state {
+      border: 1px dashed #c6d3e4;
+      border-radius: 16px;
+      padding: 18px;
+      text-align: center;
+      color: var(--muted);
+      background: #fbfdff;
+    }
+
+    .mobile-sheet-handle {
+      display: none;
+      width: 54px;
+      height: 5px;
+      border-radius: 999px;
+      background: #d8e0ed;
+      margin: 0 auto 14px;
+    }
+
+    #tooltip {
+      position: fixed;
+      z-index: 40;
+      display: none;
+      min-width: 200px;
+      max-width: 260px;
+      padding: 12px 14px;
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.98);
+      box-shadow: var(--shadow-soft);
+      border: 1px solid rgba(15, 23, 42, 0.08);
+      pointer-events: none;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .helper-text {
+      color: var(--muted);
+      font-size: 13px;
+      margin-top: 8px;
+      line-height: 1.45;
+    }
+
+    @media (max-width: 1100px) {
+      .page {
+        grid-template-columns: 1fr;
+      }
+
+      .panel {
+        position: static;
+      }
+    }
+
+    @media (max-width: 768px) {
+      body {
+        padding-bottom: 220px;
+      }
+
+      .page {
+        padding: 12px;
+        gap: 14px;
+      }
+
+      .map-card {
+        padding: 14px;
+      }
+
+      .header {
+        flex-direction: column;
+      }
+
+      .toolbar-row {
+        align-items: stretch;
+      }
+
+      .btn {
+        flex: 1 1 auto;
+        text-align: center;
+      }
+
+      .status-grid {
+        grid-template-columns: repeat(3, 1fr);
+      }
+
+      .viewport {
+        min-height: 420px;
+        height: 58vh;
+      }
+
+      .panel {
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 50;
+        border-radius: 22px 22px 0 0;
+        max-height: 48vh;
+        overflow: auto;
+      }
+
+      .mobile-sheet-handle {
+        display: block;
+      }
+    }
+
+    @media (max-width: 560px) {
+      .status-grid {
+        grid-template-columns: repeat(3, 1fr);
+      }
+
+      .details-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .counter-pill {
+        white-space: normal;
+      }
+
+      .toolbar-row.controls {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="page">
+    <section class="card map-card">
+      <div class="header">
+        <div>
+          <h1>Mapa Interativo do Loteamento</h1>
+          <p>Grupo Coimbra</p>
+        </div>
+        <div class="counter-pill" id="counterPill">0 lotes no mapa</div>
+      </div>
+
+      <div class="toolbar">
+        <div class="toolbar-row">
+          <div class="search-wrap">
+            <input id="searchInput" type="text" placeholder="Buscar por lote (ex: lote-03), quadra (A) ou status"
+              autocomplete="off" />
+            <div class="suggestions" id="suggestions"></div>
+          </div>
+          <button class="btn primary" id="clearSearchBtn">Limpar busca</button>
+        </div>
+
+        <div class="toolbar-row">
+          <div class="chips" id="quadraChips"></div>
+        </div>
+
+        <div class="toolbar-row controls">
+          <button class="btn ghost" id="fitBtn">Enquadrar tudo</button>
+          <button class="btn ghost" id="zoomInBtn">Zoom +</button>
+          <button class="btn ghost" id="zoomOutBtn">Zoom -</button>
+          <button class="btn ghost" id="resetBtn">Resetar mapa</button>
+        </div>
+
+        <div class="legend">
+          <span><i class="swatch" style="background: var(--disp);"></i> Disponível</span>
+          <span><i class="swatch" style="background: var(--res);"></i> Reservado</span>
+          <span><i class="swatch" style="background: var(--vend);"></i> Vendido</span>
+        </div>
+      </div>
+
+      <div class="viewport" id="viewport" aria-label="Área navegável do mapa">
+        <div class="svg-stage" id="svgStage">
+          <svg id="mainSvg" viewBox="0 0 1040.84 1163.16" aria-label="Mapa SVG da Quadra A">
+            <rect x="0" y="0" width="1040.84" height="1163.16" fill="#eef4fb"></rect>
+
+            <text class="map-title" x="620.42" y="72" text-anchor="right">QUADRA A</text>
+            <text class="map-subtitle" x="620.42" y="102" text-anchor="right">Empreendimento Vale dos Passos</text>
+
+            <g id="quadra-A" data-quadra="A">
+              <g id="svgRealLayer">
+                <!-- Áreas de contexto do SVG original -->
+
+                <path id="lago"
+                  d="M361.65,1085.28l36.77-50.54,28.74-49.21,37.14-60.74,23.81-53.97,28.51-63.44-11.35-83.34-31.38-48.36-48.85-37.18-35.74-26.5-32.68-25.35c-.31-.24-.56-.55-.73-.91l-8.4-17.76c-.18-.38-.26-.79-.24-1.21l1.02-17.77-11.14-11.82c-.62-.66-.84-1.59-.57-2.45l3-9.72c.03-.09.06-.19.1-.28l7.68-17.28c.42-.95,1.38-1.52,2.39-1.48.14,0,.29.02.43.06l24.77,5.52,14.26-3.27,11.33-35.6s.03-.09.04-.13l9.6-25.32c.1-.27.25-.52.44-.74l17.16-20.04c.09-.11.2-.21.31-.3l24.57-20.28,18.25-20.46,3.99-20.71-11.02-15.45c-.31-.44-.48-.97-.46-1.52l.58-22.55-12.71-21.22c-.2-.34-.32-.72-.35-1.11v-.39l2-22.32-5.98-19.82c-.13-.43-.14-.89-.03-1.33l2.7-10.74,2.7-10.74s.02-.08.04-.12c0-.01,0-.02.01-.04l6.26-19.45-12.29-8.27-35.53-20.72-20.89,11.81-12.38,32.39-1.26,25.52,8.16,14.51,6.56,7.61c.38.44.59.99.6,1.56,0,.19-.01.38-.05.57l-5.04,24.96s-.02.1-.04.15l-5.61,21.01-4.06,23.65c-.04.25-.12.49-.24.71l-11.4,22.32c-.4.79-1.19,1.3-2.07,1.36l-7.44.48c-1.05.06-2.02-.53-2.45-1.49l-3.13-7.1-15.57-4.59c-.86-.25-1.52-.95-1.73-1.82l-3-12.72s-.02-.09-.03-.14l-3.6-20.53-11.27-12.42c-.09-.1-.18-.22-.25-.33-.23-.35-.36-.76-.39-1.18l-.93-13.94-.62-9.27-2.31-18.95-7.31-9.74-8.36-1.67-8.91,5-11.13,48.57,4.86,16.86,4.83,16.75,13.86,22.39,15.9,27.14,4.74,5.99,14.23,17.99c.14.18.25.38.34.59.12.29.19.6.2.91l.48,27.28,2.03,25.6c.02.26,0,.52-.06.77l-6.08,25.88-1.54,15.08c-.02.18-.05.35-.11.52l-6.08,18.68,21.75,18.24c.71.6,1.02,1.53.84,2.41-.03.13-.06.25-.11.38l-6.39,17.12,3.63,9.56c.29.75.19,1.6-.25,2.27l-70.44,106.08c-.21.32-.5.59-.83.78l-9.81,5.66-24.21,13.97-22.51,23.1-22.5,46.79c-.04.08-.08.16-.13.23l-29.16,47.04c-.27.44-.68.79-1.16.99l-20.25,8.5-2.94,83.84-2.64,55.68h0v.03c0,.07-.02.13-.03.2,0,.06-.01.12-.02.18-.02.08-.04.16-.07.24-.01.04-.02.09-.04.13-.04.1-.08.2-.13.29,0,.02-.02.04-.03.06-.06.11-.13.22-.21.32l-70.42,90.93,11.46,30.35,46.33-15.85s.07-.02.1-.03c.48-.14.96-.14,1.41,0l105.57,29.03c.17.05.33.11.49.19l95.98,46.82,20.44-48.08c.02-.06.05-.11.08-.17h0c.18-.35.42-.64.71-.86l.33-.26,14.31-28.16c.06-.12.13-.23.21-.34h.04Z"
+                  fill="#00c9ff" stroke="#8ad4e8" stroke-width="2" />
+
+                <path id="verde"
+                  d="M454.15,1052.25l5.8-9.53c.12-.34.31-.65.55-.9l5.82-9.56c.12-.33.3-.62.53-.87l5.45-8.95.36-.64c.11-.35.28-.66.51-.92l5.97-10.72c.11-.34.28-.65.51-.91l6.22-11.16c.06-.12.12-.24.2-.35l6.15-11.04c.11-.39.31-.74.57-1.03l12.55-22.54c.08-.24.21-.45.36-.64l11.76-21.13,1.08-2.35s.04-.08.05-.12l7-15.27c.07-.21.16-.42.27-.6l21.09-45.98c.07-.21.15-.4.26-.57l6.79-14.8c.07-.27.19-.52.34-.74l20.72-45.18-2.08-15.18c-.08-.26-.12-.54-.11-.83l-2.15-15.67c-.1-.3-.15-.62-.13-.96l-2.13-15.54c-.13-.34-.18-.71-.15-1.09l-2.14-15.6c-.12-.33-.18-.69-.15-1.06l-2.11-15.44c-.15-.37-.21-.78-.16-1.19l-2.12-15.5c-.14-.36-.2-.76-.16-1.16l-1.13-8.24-44.3-71.74-19.85-18.33s-.06-.06-.1-.09l-62.48-57.67c-.72-.66-.98-1.69-.68-2.62l16.74-50.96c.04-.19.1-.36.17-.53l9.73-29.63c.12-.37.32-.7.6-.98l44.41-44.99c.05-.06.11-.12.17-.18l16.56-16.78c.12-.15.26-.29.41-.41l2.02-2.05,4.2-11.52c.04-.15.09-.29.15-.42l8.06-22.1s.01-.03.02-.04l7.87-21.59.03-.22c.06-.4.22-.75.43-1.06l7.77-21.3c.05-.23.13-.45.24-.65l7.97-21.87c.03-.09.06-.18.1-.26l10.47-28.71c.06-.22.13-.43.25-.63,1.55-2.61,3.02-5.25,4.42-7.91.05-.1.1-.21.16-.3,2.41-4.58,4.62-9.22,6.62-13.92.07-.33.2-.63.38-.89,3.27-7.79,5.99-15.72,8.15-23.74l.08-.55c.04-.28.14-.54.26-.78,3.29-12.59,5.22-25.4,5.82-38.22-.1-.34-.14-.71-.08-1.09l.19-1.24c.15-4.34.14-8.68-.02-13.02-.2-.47-.25-.99-.14-1.49-.15-3.35-.39-6.68-.71-9.98-.04-.18-.06-.37-.05-.56-.51-5.08-1.23-10.11-2.15-15.08-.19-.39-.27-.83-.24-1.28-.73-3.79-1.58-7.55-2.54-11.26-.24-.4-.37-.87-.35-1.37-.85-3.2-1.8-6.37-2.81-9.5-.15-.27-.25-.57-.29-.89-.95-2.88-1.96-5.73-3.05-8.55-.13-.22-.22-.46-.28-.71-14.06-36.06-39.08-66.92-71.15-88.18-.21-.1-.4-.22-.57-.37-1.2-.79-2.4-1.56-3.62-2.32-.27-.11-.52-.26-.73-.46-1.15-.71-2.31-1.41-3.47-2.1-.39-.12-.74-.32-1.02-.59-1.19-.69-2.39-1.37-3.6-2.04-.13-.06-.25-.12-.36-.2-2.71-1.48-5.45-2.9-8.24-4.26-.24-.08-.46-.19-.67-.33-1.14-.55-2.3-1.09-3.45-1.61h-.06c-.5-.07-.94-.29-1.29-.61-1.17-.52-2.34-1.03-3.52-1.53-.14-.04-.26-.1-.39-.16-1.27-.53-2.55-1.05-3.84-1.56-.34-.06-.66-.18-.94-.36-1.18-.46-2.37-.9-3.57-1.34-.26-.05-.5-.14-.72-.26-1.22-.44-2.44-.86-3.67-1.27h-.06c-.33-.05-.63-.16-.9-.32-1.17-.38-2.34-.75-3.52-1.11-.06,0-.12,0-.17,0-.31-.05-.59-.16-.84-.3-1.15-.34-2.3-.67-3.45-.99-.07,0-.14,0-.22,0-.29-.04-.56-.14-.8-.26-1.16-.31-2.31-.62-3.48-.92h-.06c-.16,0-.31,0-.47-.04-.25-.05-.48-.14-.69-.25-1.11-.27-2.22-.54-3.33-.79h-.06c-.13,0-.25,0-.38-.03-.25-.04-.47-.12-.69-.22-1.15-.25-2.3-.49-3.45-.72-.05,0-.1,0-.16,0-.12,0-.24,0-.36-.03-.26-.04-.5-.12-.72-.23-1.1-.21-2.21-.41-3.31-.6-.06,0-.11.02-.17.02-.37,0-.71-.08-1.02-.22-.15-.02-.3-.05-.45-.08l-44.47-1.98c-28.7,2.22-57.19,11.12-83.09,26.99-47.58,29.16-78.19,76.75-86.68,128.97-3.01,28.2-1.09,56.92,5.89,84.81.15.48.29.97.44,1.45.22.7.11,1.42-.23,2.01l-4.15,18.18v.06c-.03.12-.06.23-.09.34l-12.41,54.3,5.76,19.98c.04.12.08.24.11.37l6.19,21.5h0v.04h0l3.62,13.09,17.69,28.37,17.59,29.91,9.5,12.11c.33.42.52.95.53,1.48v.34l.12,4.53,1.55,23.49v.1h0c0,.06-.01.12-.02.18,0,.19,0,.37-.05.55h0l-.04.16-5,21.38s0,.09.02.13c.02.11.03.22.04.33v.2c0,.11-.02.22-.04.33-.01.07-.02.13-.04.19-.03.12-.07.23-.12.34-.02.05-.04.11-.07.16-.08.16-.18.32-.3.47-.03.03-.06.05-.08.08l-17.57,60.65,3.29,2.79c.17.11.31.24.45.38l12.5,10.6s.11.08.16.13l3.11,2.64c.08.07.15.15.22.23l.12.12c.05.07.09.14.14.21.04.07.09.13.13.2s.06.15.09.22c.03.08.07.15.09.24.04.14.06.28.08.42,0,.02,0,.04.01.06h0c.01.14,0,.28,0,.42v.07c-.01.11-.04.21-.07.32-.01.05-.02.11-.03.16-.03.09-.07.17-.11.25-.03.06-.05.13-.08.19-.08.14-.17.28-.28.41l-39.27,46.31c-.06.08-.13.16-.19.23l-5.4,6.36c-.15.27-.35.5-.58.69l-11.23,13.24c-.06.08-.12.15-.18.22l-17.22,20.31-.18.21-23.01,27.14c-.12.18-.26.35-.41.49l-5.23,6.17c-.17.31-.39.57-.66.78l-11.1,13.09c-.12.18-.25.34-.41.48l-17,20.05c-.11.17-.24.33-.39.47l-28.5,33.61c-.18.34-.43.63-.73.86l-5.38,6.34c-.05.07-.11.14-.17.2l-5.42,6.39c-.15.26-.34.48-.57.67l-11.24,13.26c-.05.07-.11.13-.17.2l-5.43,6.4s-.04.05-.05.07l-4.17,120.44-1.8,37.47c0,.07-.02.13-.03.2,0,.06-.01.11-.02.17-.01.07-.04.14-.06.2-.02.06-.03.11-.05.17-.02.07-.06.13-.09.2-.02.05-.04.1-.07.15s-.07.1-.1.16c-.04.06-.07.11-.11.17l-68.04,87.72h-.01l-10.78,14.23,22.23,58.84,9.48-3.95s.05-.02.07-.03h0s.07-.03.11-.04l39.03-13.36-11.9-31.51c-.31-.81-.17-1.73.36-2.41l44.06-56.89,26.73-34.52,5.61-140.3h0v-.02c0-.13.04-.24.07-.36.02-.11.03-.23.06-.34.04-.11.1-.2.15-.3.05-.11.09-.22.16-.32.08-.11.19-.21.28-.31.07-.07.12-.15.19-.21.18-.15.39-.27.61-.37l20.98-8.81,28.67-46.25,22.62-47.04c.12-.24.27-.47.46-.66l23.04-23.64c.16-.16.34-.31.54-.42l33.81-19.51,69.4-104.52-3.5-9.24c-.22-.57-.22-1.19,0-1.76l6.1-16.35-21.69-18.18c-.78-.66-1.09-1.72-.77-2.69l6.52-20.03,1.53-14.97c.01-.11.03-.21.05-.32l6.03-25.66-2.01-25.29v-.15l-.47-26.52-18.56-23.46c-.07-.08-.13-.17-.18-.26v-.02h-.01v-.02l-29.99-49.88c-.11-.19-.2-.39-.26-.6l-9.96-34.56c-.06-.2-.09-.41-.1-.62,0-.06.01-.13.02-.19,0-.14,0-.28.04-.42l5.88-26.88,5.65-23.45c.02-.1.07-.19.1-.28.02-.06.04-.13.07-.19.04-.09.1-.18.16-.27.04-.06.06-.12.11-.17.06-.08.14-.15.21-.23.05-.05.09-.1.14-.15.13-.11.27-.21.42-.3l10.68-6c.52-.29,1.13-.39,1.71-.27l10.2,2.04c.6.12,1.14.46,1.51.95l8.28,11.04c.26.35.43.76.48,1.2l2.4,19.68s0,.09.01.14l1.5,22.41,11.18,12.32c.32.35.53.78.61,1.25l3.71,21.17,2.65,11.24,15.29,4.51c.35.1.67.28.94.52.04.03.06.07.1.11.09.09.19.18.26.29.11.15.2.3.27.47l2.9,6.56,4.28-.28,10.58-20.72,4.02-23.38c.01-.07.03-.15.05-.22l5.62-21.05,4.78-23.69-5.92-6.87c-.11-.13-.2-.26-.29-.41l-8.64-15.36c-.23-.41-.34-.88-.32-1.35h0l.66-13.32.66-13.32c.01-.26.07-.52.16-.77l12.84-33.6c.21-.54.6-1,1.1-1.28l22.92-12.96c.77-.44,1.72-.43,2.49.02l36.84,21.48s.09.06.14.08l13.92,9.36c.23.16.43.34.59.56.49.64.65,1.49.39,2.28l-3.47,10.76-3.35,10.4-5.21,20.73,5.92,19.62c.09.31.12.63.1.94l-1.97,21.99,12.66,21.14c.24.41.37.88.35,1.35l-.58,22.44,11.15,15.64c.4.56.55,1.25.42,1.92l-4.32,22.44c-.09.44-.29.85-.59,1.19l-18.84,21.12c-.08.09-.18.18-.27.26l-24.55,20.26-16.73,19.54-9.42,24.85-11.74,36.89c-.27.84-.96,1.48-1.82,1.68l-16.2,3.72c-.36.08-.74.09-1.1,0l-23.32-5.2-6.79,15.27-2.53,8.19,10.88,11.54c.47.5.72,1.17.68,1.86l-1.04,18.2,7.87,16.64,32.17,24.95,35.72,26.49,49.22,37.46c.23.17.43.39.58.63l31.92,49.2c.2.31.33.66.38,1.02l11.52,84.6c.06.46,0,.94-.2,1.36l-28.8,64.08-23.87,54.1c-.04.1-.1.2-.15.29l-37.2,60.84-28.77,49.28c-.04.07-.09.14-.14.21l-36.72,50.48-9.34,18.37,16.09-12.65s.04-.03.06-.04h0c.42-.31.91-.46,1.4-.48l56.47-2.13,3.99-6.55c.12-.41.35-.76.63-1.04l5.73-9.42c.12-.39.33-.72.61-1l5.76-9.46c.12-.37.32-.7.59-.97l5.78-9.49c.12-.36.32-.67.57-.93l.06.05Z"
+                  fill="#148260" stroke="#9bcb92" stroke-width="2" />
+
+                <!-- LOTES REAIS DO SVG -->
+                <path id="lote-15"
+                  d="M665.71,732.33l32.7-2.71-7.31-85.86-7.71-90.53-26.11-11.74-3.51-1.57h0l-2.31-1.04-2.33-1.05,16.2,189.56v.34l.39,4.62v-.02Z">
+                </path>
+                <path id="lote-17"
+                  d="M773.65,723.15l-2.13-25.26-9.27-109.87-4.77-1.57h-.03c-.08-.04-.15-.06-.23-.1l-29.13-13.03,12.99,152.64,32.58-2.81h0Z">
+                </path>
+                <polygon id="lote-18"
+                  points="778.63 722.73 811.32 720.02 801.24 600.82 793.57 598.32 793.57 598.32 793.57 598.32 767.4 589.71 778.32 719.03 778.63 722.73">
+                </polygon>
+                <polygon id="lote-16"
+                  points="736.08 726.39 731.65 674.26 722.86 570.98 688.6 555.57 703.39 729.2 736.08 726.39"></polygon>
+                <path id="lote-13"
+                  d="M590.02,732.06l3.97-.55c.36-.14.76-.2,1.17-.16l3.91-.54s.07-.03.11-.05c.54-.17,1.09-.32,1.64-.46.3-.08.61-.14.91-.21.22-.05.44-.1.67-.14.42-.08.85-.15,1.27-.22.08-.01.16-.02.23-.03,5.42-.78,10.89,0,15.83,2.22h.01c.59.26,1.16.55,1.73.85.03.01.05.02.08.04l-37.89-224.53-88.94-39.9,2.25,10.34c.03.09.04.18.06.28l5.6,25.7s.01.06.02.09l2.72,12.48c.14.31.22.65.22,1.01l5.44,24.96c.12.29.19.6.2.93l5.52,25.35c.04.13.07.26.09.4l5.57,25.57c.02.08.04.15.05.23l5.61,25.74v.04l1.13,5.17,40.29,65.29c.12.16.23.33.31.51l3.56,5.77c.08.11.15.22.21.34l2.2,3.57c.18.3.3.63.35.98l4.1,30.24h.17l8.83-1.22c.25-.08.51-.11.78-.11l.02.02Z"
+                  fill="#e4ff73" />
+                <polygon id="lote-14" points="660.72 732.75 643.9 535.46 589.15 510.75 627.11 735.69 660.72 732.75">
+                </polygon>
+                <polygon id="lote-19"
+                  points="816.31 719.6 849.01 716.79 840.24 613.53 816.79 605.88 806.4 602.5 814.37 696.68 816.31 719.6">
+                </polygon>
+                <polygon id="lote-11"
+                  points="905.83 630 935.39 644.05 958.82 589.26 978.05 544.29 948.38 530.21 905.83 630"></polygon>
+                <polygon id="lote-09"
+                  points="833.84 606.18 865.07 616.38 868.1 609.26 908.9 513.56 877.37 504.08 833.84 606.18"></polygon>
+                <polygon id="lote-10"
+                  points="913.72 515.01 903.15 539.8 869.84 617.93 885.6 623.06 901.19 628.14 941.63 533.29 943.86 528.07 920.89 517.17 913.72 515.01">
+                </polygon>
+                <polygon id="lote-21"
+                  points="968.6 669.05 970.95 666.48 935.6 649.68 935.59 649.68 902.54 633.97 901.66 633.55 870.62 623.45 900.59 703.92 968.6 669.05">
+                </polygon>
+                <polygon id="lote-20"
+                  points="881 714.1 896.11 706.23 867.66 629.82 864.55 621.47 845.4 615.21 846.22 624.9 853.99 716.37 881 714.1">
+                </polygon>
+                <polygon id="lote-07"
+                  points="761.61 582.52 765.35 583.72 765.36 583.73 765.37 583.73 792.96 592.82 836.07 491.7 804.53 482.22 761.61 582.52">
+                </polygon>
+                <path id="lote-12"
+                  d="M1036.29,595.76c.06-.09.12-.18.2-.27,3.53-3.82,5.04-9.14,4.06-14.24-.95-4.92-4.15-9.15-8.59-11.44-.15-.04-.3-.09-.44-.16-.02,0-.03,0-.05-.02l-48.91-23.21-32.1,75.07-10.56,24.69,34.57,16.42,61.81-66.86v.02Z">
+                </path>
+                <polygon id="lote-08"
+                  points="840.89 493.14 797.73 594.39 804.37 596.57 804.37 596.57 818.81 601.28 829.07 604.62 841.38 575.73 872.55 502.63 865.92 500.63 840.89 493.14">
+                </polygon>
+                <polygon id="lote-03"
+                  points="666.16 421.09 655.37 446.37 623.61 520.76 653.49 534.29 696.05 434.61 670.66 423.11 666.16 421.09">
+                </polygon>
+                <path id="lote-06"
+                  d="M796.99,479.9h-.01c-.06-.02-.12-.05-.17-.07-.04-.01-.07-.03-.11-.04l-.58-.26-26.49-11.89-42.56,99.68,29.88,13.43,42.79-99.99-2.65-.83-.08-.02h-.02Z">
+                </path>
+                <path id="lote-01"
+                  d="M601.97,387.96c-.15-.2-.3-.41-.45-.61-.19-.25-.38-.5-.56-.76h0s-.03-.05-.05-.07c-.01-.02-.02-.04-.04-.06-.04-.05-.08-.1-.11-.15-.16-.24-.3-.49-.45-.73-.21-.33-.43-.66-.63-.99-.04-.07-.07-.14-.11-.21-.09-.16-.17-.32-.25-.47-.25-.46-.51-.92-.74-1.39-.06-.12-.11-.25-.16-.37-.27-.58-.54-1.16-.77-1.75-.04-.09-.06-.19-.1-.28-3.08-7.99-2.69-16.9,1.17-24.67.07-.14.15-.28.22-.42.06-.12.12-.24.18-.35l-32.74-12.85-1.43,3.93c-.05.28-.15.54-.28.77l-15.89,43.75h0c-.05.35-.17.66-.34.93l-7.93,21.82s-.02.04-.02.07l-2.4,6.6c-.12.34-.32.64-.57.9l-20.71,21.05c-.11.13-.23.26-.36.36l-5.22,5.3c-.15.2-.32.38-.52.53l-5.06,5.14c-.18.27-.41.51-.68.69l-4.9,4.98c-.21.35-.5.64-.84.85l-3.72,3.78,89.08,39.97,44.1-103.35c-.8.06-1.6.1-2.39.1-9.46,0-18.43-4.35-24.35-12.02l.02-.02Z"
+                  fill="#e4ff73" />
+                <polygon id="lote-04"
+                  points="658.05 536.35 659.75 537.11 688.05 549.78 730.6 450.1 700.61 436.67 658.05 536.35"></polygon>
+                <polygon id="lote-05" points="692.59 551.88 722.46 565.32 765.05 465.56 735.18 452.13 692.59 551.88">
+                </polygon>
+                <path id="lote-02"
+                  d="M656.71,416.79h-.01l-22.89-16.1-44.63,104.59,29.88,13.43,42.55-99.66-4.48-2.01c-.14-.06-.28-.14-.41-.23v-.02Z">
+                </path>
+              </g>
+
+              <g id="lotLabelsLayer"></g>
+            </g>
+
+            <text class="map-bg-label" x="145" y="1080">Lago</text>
+            <text class="map-bg-label" x="540" y="1000">Área verde</text>
+          </svg>
+        </div>
+      </div>
+
+      <div class="helper-text">
+        Desktop: use a roda do mouse para zoom e arraste para navegar. Celular: arraste com um dedo e use dois dedos
+        para aproximar ou afastar.
+      </div>
+    </section>
+
+    <aside class="card panel">
+      <div class="mobile-sheet-handle"></div>
+      <h2>Resumo e Detalhes</h2>
+      <p>Selecione uma quadra ou um lote para visualizar as informações no painel fixo.</p>
+
+      <div class="status-grid" id="statusGrid"></div>
+      <div class="selection-summary" id="selectionSummary"></div>
+      <div class="details-box" id="detailsBox"></div>
+    </aside>
+  </div>
+
+  <div id="tooltip"></div>
+
+  <script>
+    const statusConfig = {
+      disponivel: { label: 'Disponível', pill: '#d9f7d9' },
+      reservado: { label: 'Reservado', pill: '#fff2c9' },
+      vendido: { label: 'Vendido', pill: '#f8d7da' }
+    };
+
+    const imagensBase = [
+      './../image/lote-1.jpg',
+      './../image/lote-2.jpg',
+      './../image/lote-3.jpg',
+      './../image/lote-4.jpg',
+      './../image/lote-5.jpg',
+      './../image/lote-6.jpg',
+      './../image/lote-7.jpg'
+    ];
+
+    const dados = {
+      'lote-01': { area: '402m²', preco: 'R$ 128.000', status: 'disponivel', frente: '12', fundo: '33,5', quadra: 'A', descricao: 'Lote fictício com boa implantação e frente valorizada.', image: imagensBase[0] },
+      'lote-02': { area: '398m²', preco: 'R$ 126.500', status: 'disponivel', frente: '12', fundo: '33', quadra: 'A', descricao: 'Lote fictício próximo ao acesso principal da quadra.', image: imagensBase[1] },
+      'lote-03': { area: '395m²', preco: 'R$ 124.000', status: 'reservado', frente: '12', fundo: '32,8', quadra: 'A', descricao: 'Lote fictício reservado para negociação em andamento.', image: imagensBase[2] },
+      'lote-04': { area: '408m²', preco: 'R$ 131.000', status: 'disponivel', frente: '12,5', fundo: '33,1', quadra: 'A', descricao: 'Lote fictício com ótima relação de área e profundidade.', image: imagensBase[3] },
+      'lote-05': { area: '411m²', preco: 'R$ 132.500', status: 'vendido', frente: '12,5', fundo: '33,4', quadra: 'A', descricao: 'Lote fictício já comercializado.', image: imagensBase[4] },
+      'lote-06': { area: '406m²', preco: 'R$ 129.700', status: 'disponivel', frente: '12,3', fundo: '33', quadra: 'A', descricao: 'Lote fictício com boa topografia para projeto residencial.', image: imagensBase[5] },
+      'lote-07': { area: '409m²', preco: 'R$ 130.900', status: 'disponivel', frente: '12,4', fundo: '33,2', quadra: 'A', descricao: 'Lote fictício em posição estratégica dentro da quadra.', image: imagensBase[6] },
+      'lote-08': { area: '403m²', preco: 'R$ 128.800', status: 'reservado', frente: '12,1', fundo: '33', quadra: 'A', descricao: 'Lote fictício com reserva recente e documentação em análise.', image: imagensBase[0] },
+      'lote-09': { area: '397m²', preco: 'R$ 125.900', status: 'disponivel', frente: '12', fundo: '32,9', quadra: 'A', descricao: 'Lote fictício com excelente visibilidade no conjunto.', image: imagensBase[1] },
+      'lote-10': { area: '394m²', preco: 'R$ 123.800', status: 'vendido', frente: '11,9', fundo: '32,7', quadra: 'A', descricao: 'Lote fictício vendido em etapa anterior de comercialização.', image: imagensBase[2] },
+      'lote-11': { area: '414m²', preco: 'R$ 134.400', status: 'disponivel', frente: '12,7', fundo: '33,6', quadra: 'A', descricao: 'Lote fictício indicado para projeto com área construída ampliada.', image: imagensBase[3] },
+      'lote-12': { area: '420m²', preco: 'R$ 139.500', status: 'disponivel', frente: '13', fundo: '34', quadra: 'A', descricao: 'Lote fictício com formato diferenciado e maior potencial de valorização.', image: imagensBase[4] },
+      'lote-13': { area: '388m²', preco: 'R$ 121.700', status: 'reservado', frente: '11,8', fundo: '32,4', quadra: 'A', descricao: 'Lote fictício reservado, ideal para residência compacta premium.', image: imagensBase[5] },
+      'lote-14': { area: '391m²', preco: 'R$ 122.900', status: 'disponivel', frente: '11,9', fundo: '32,6', quadra: 'A', descricao: 'Lote fictício com boa insolação e profundidade equilibrada.', image: imagensBase[6] },
+      'lote-15': { area: '396m²', preco: 'R$ 124.600', status: 'vendido', frente: '12', fundo: '32,8', quadra: 'A', descricao: 'Lote fictício vendido, mantido no mapa para referência comercial.', image: imagensBase[0] },
+      'lote-16': { area: '401m²', preco: 'R$ 127.300', status: 'disponivel', frente: '12,1', fundo: '33', quadra: 'A', descricao: 'Lote fictício com posição central e fácil leitura no mapa.', image: imagensBase[1] },
+      'lote-17': { area: '404m²', preco: 'R$ 128.900', status: 'disponivel', frente: '12,2', fundo: '33,1', quadra: 'A', descricao: 'Lote fictício com boa conformação para garagem lateral.', image: imagensBase[2] },
+      'lote-18': { area: '399m²', preco: 'R$ 126.800', status: 'reservado', frente: '12', fundo: '33', quadra: 'A', descricao: 'Lote fictício reservado com grande interesse de compradores.', image: imagensBase[3] },
+      'lote-19': { area: '407m²', preco: 'R$ 130.200', status: 'disponivel', frente: '12,4', fundo: '33,2', quadra: 'A', descricao: 'Lote fictício com área bem distribuída e ótima implantação.', image: imagensBase[4] },
+      'lote-20': { area: '412m²', preco: 'R$ 133.100', status: 'vendido', frente: '12,6', fundo: '33,5', quadra: 'A', descricao: 'Lote fictício vendido, mantido para leitura completa da quadra.', image: imagensBase[5] },
+      'lote-21': { area: '425m²', preco: 'R$ 142.000', status: 'disponivel', frente: '13,2', fundo: '34,1', quadra: 'A', descricao: 'Lote fictício com maior área entre os disponíveis desta versão.', image: imagensBase[6] }
+    };
+
+    const lotIds = Object.keys(dados);
+
+    const state = {
+      selectedLotId: null,
+      selectedQuadra: 'TODAS',
+      searchTerm: '',
+      suggestions: [],
+      scale: 0.62,
+      x: 0,
+      y: 0,
+      dragging: false,
+      dragStartX: 0,
+      dragStartY: 0,
+      activePointers: new Map(),
+      pinchStartDistance: 0,
+      pinchStartScale: 1,
+      pinchWorldCenter: null,
+      hoverEnabled: window.matchMedia('(hover: hover)').matches
+    };
+
+    const SVG_WIDTH = 1040.84;
+    const SVG_HEIGHT = 1163.16;
+
+    const viewport = document.getElementById('viewport');
+    const svgStage = document.getElementById('svgStage');
+    const mainSvg = document.getElementById('mainSvg');
+    const quadraChips = document.getElementById('quadraChips');
+    const statusGrid = document.getElementById('statusGrid');
+    const detailsBox = document.getElementById('detailsBox');
+    const selectionSummary = document.getElementById('selectionSummary');
+    const counterPill = document.getElementById('counterPill');
+    const searchInput = document.getElementById('searchInput');
+    const suggestionsBox = document.getElementById('suggestions');
+    const tooltip = document.getElementById('tooltip');
+    const lotLabelsLayer = document.getElementById('lotLabelsLayer');
+
+    function getLotDisplayName(id) {
+      return id.replace('lote-', 'Lote ');
+    }
+
+    function countStatus(status) {
+      return Object.values(dados).filter(item => item.status === status).length;
+    }
+
+    function filteredLotIds() {
+      const term = state.searchTerm.trim().toLowerCase();
+
+      return Object.entries(dados)
+        .filter(([id, info]) => {
+          const matchesQuadra = state.selectedQuadra === 'TODAS' || info.quadra === state.selectedQuadra;
+          const matchesTerm = !term || [
+            id,
+            getLotDisplayName(id),
+            `quadra ${info.quadra}`,
+            info.quadra,
+            info.status,
+            statusConfig[info.status]?.label || '',
+            info.descricao || '',
+            info.preco || ''
+          ].join(' ').toLowerCase().includes(term);
+
+          return matchesQuadra && matchesTerm;
+        })
+        .map(([id]) => id);
+    }
+
+    function renderStatusGrid() {
+      statusGrid.innerHTML = `
+        <div class="status-card disponivel"><small>Disponível</small><strong>${countStatus('disponivel')}</strong></div>
+        <div class="status-card reservado"><small>Reservado</small><strong>${countStatus('reservado')}</strong></div>
+        <div class="status-card vendido"><small>Vendido</small><strong>${countStatus('vendido')}</strong></div>
+      `;
+    }
+
+    function renderSelectionSummary() {
+      const ids = filteredLotIds();
+      const activeQuadraText = state.selectedQuadra === 'TODAS' ? 'Todas as quadras' : `Quadra ${state.selectedQuadra}`;
+      const activeBusca = state.searchTerm ? `Busca: “${state.searchTerm}”` : 'Sem busca ativa';
+
+      selectionSummary.innerHTML = `
+        <strong>Visualização atual</strong>
+        <span class="muted">${activeQuadraText}</span>
+        <span class="muted">${activeBusca}</span>
+        <span class="muted">${ids.length} lote(s) em destaque</span>
+      `;
+
+      counterPill.textContent = `${lotIds.length} lotes no mapa`;
+    }
+
+    function createStatusPill(status) {
+      const cfg = statusConfig[status] || statusConfig.disponivel;
+      return `<span class="status-pill" style="background:${cfg.pill}">${cfg.label}</span>`;
+    }
+
+    function getImageSrc(info) {
+      return info.image || './image/lote-1.jpg';
+    }
+
+    function renderDetails() {
+      if (!state.selectedLotId || !dados[state.selectedLotId]) {
+        detailsBox.innerHTML = `
+          <div class="empty-state">
+            <strong>Nenhum lote selecionado</strong>
+            <p class="muted">Toque ou clique em um lote do mapa, use a busca ou selecione uma quadra.</p>
+          </div>
+        `;
+        return;
+      }
+
+      const info = dados[state.selectedLotId];
+
+      detailsBox.innerHTML = `
+        <div class="details-header">
+          <div>
+            <h3 style="text-transform: uppercase;">${state.selectedLotId}</h3>
+            <p>Quadra ${info.quadra}</p>
+          </div>
+          ${createStatusPill(info.status)}
+        </div>
+
+        <div class="details-image">
+          <img src="${getImageSrc(info)}" alt="${getLotDisplayName(state.selectedLotId)}"
+            onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=1200&q=80';">
+        </div>
+
+        <div class="details-grid">
+          <div class="metric"><small>Área</small><strong>${info.area || '-'}</strong></div>
+          <div class="metric"><small>Preço</small><strong>${info.preco || '-'}</strong></div>
+          <div class="metric"><small>Frente</small><strong>${info.frente || '-'} m</strong></div>
+          <div class="metric"><small>Fundo</small><strong>${info.fundo || '-'} m</strong></div>
+        </div>
+
+        <div class="description-box">
+          <strong>Descrição</strong>
+          <div style="margin-top:8px;">${info.descricao || 'Sem descrição cadastrada.'}</div>
+        </div>
+      `;
+    }
+
+    function renderQuadraChips() {
+      const quadras = ['TODAS', ...new Set(Object.values(dados).map(item => item.quadra))];
+
+      quadraChips.innerHTML = quadras.map(quadra => {
+        const label = quadra === 'TODAS' ? 'Todas as quadras' : `Quadra ${quadra}`;
+        return `<button class="chip ${state.selectedQuadra === quadra ? 'active' : ''}" data-quadra="${quadra}">${label}</button>`;
+      }).join('');
+
+      quadraChips.querySelectorAll('.chip').forEach(chip => {
+        chip.addEventListener('click', () => {
+          state.selectedQuadra = chip.dataset.quadra;
+          renderAll();
+          focusCurrentSelection();
+        });
+      });
+    }
+
+    function buildSuggestions() {
+      const term = searchInput.value.trim().toLowerCase();
+
+      if (!term) {
+        state.suggestions = [];
+        renderSuggestions();
+        return;
+      }
+
+      state.suggestions = Object.entries(dados)
+        .filter(([id, info]) => {
+          return [id, getLotDisplayName(id), `quadra ${info.quadra}`, info.quadra, info.status, info.preco]
+            .join(' ')
+            .toLowerCase()
+            .includes(term);
+        })
+        .slice(0, 8)
+        .map(([id, info]) => ({
+          id,
+          quadra: info.quadra,
+          status: statusConfig[info.status]?.label || info.status
+        }));
+
+      renderSuggestions();
+    }
+
+    function renderSuggestions() {
+      if (!state.suggestions.length) {
+        suggestionsBox.style.display = 'none';
+        suggestionsBox.innerHTML = '';
+        return;
+      }
+
+      suggestionsBox.innerHTML = state.suggestions.map(item => `
+        <div class="suggestion-item" data-id="${item.id}">
+          <strong>${getLotDisplayName(item.id)}</strong>
+          <span class="muted">Quadra ${item.quadra} • ${item.status}</span>
+        </div>
+      `).join('');
+
+      suggestionsBox.style.display = 'block';
+
+      suggestionsBox.querySelectorAll('.suggestion-item').forEach(item => {
+        item.addEventListener('click', () => {
+          const id = item.dataset.id;
+          state.selectedLotId = id;
+          state.selectedQuadra = dados[id].quadra;
+          state.searchTerm = id;
+          searchInput.value = id;
+          renderAll();
+          focusLot(id);
+          suggestionsBox.style.display = 'none';
+        });
+      });
+    }
+
+    function ensureLotClasses() {
+      lotIds.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+          el.classList.add('map-lot');
+          el.setAttribute('data-id', id);
+          el.setAttribute('data-quadra', dados[id].quadra);
+        }
+      });
+    }
+
+    function renderLotLabels() {
+      lotLabelsLayer.innerHTML = '';
+
+      lotIds.forEach(id => {
+        const el = document.getElementById(id);
+        if (!el) return;
+
+        try {
+          const box = el.getBBox();
+          const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+          text.setAttribute('x', box.x + box.width / 2);
+          text.setAttribute('y', box.y + box.height / 2);
+          text.setAttribute('class', 'lot-label');
+          text.setAttribute('data-for', id);
+          text.textContent = id.replace('lote-', 'L ');
+          lotLabelsLayer.appendChild(text);
+        } catch (error) {
+          console.warn(`Não foi possível gerar label para ${id}`, error);
+        }
+      });
+    }
+
+    function renderLotsState() {
+      const highlighted = new Set(filteredLotIds());
+
+      lotIds.forEach(id => {
+        const el = document.getElementById(id);
+        const label = lotLabelsLayer.querySelector(`[data-for="${id}"]`);
+        if (!el) return;
+
+        el.classList.remove('disponivel', 'reservado', 'vendido', 'muted', 'selected', 'hover');
+        el.classList.add(dados[id].status);
+
+        if (!highlighted.has(id)) {
+          el.classList.add('muted');
+          label?.classList.add('muted');
+        } else {
+          label?.classList.remove('muted');
+        }
+
+        if (state.selectedLotId === id) {
+          el.classList.add('selected');
+        }
+      });
+    }
+
+    function attachLotEvents() {
+      lotIds.forEach(id => {
+        const el = document.getElementById(id);
+        if (!el || el.dataset.bound === 'true') return;
+
+        el.dataset.bound = 'true';
+
+        if (state.hoverEnabled) {
+          el.addEventListener('mouseenter', () => el.classList.add('hover'));
+          el.addEventListener('mouseleave', () => {
+            el.classList.remove('hover');
+            hideTooltip();
+          });
+          el.addEventListener('mousemove', event => showTooltip(event, id));
+        }
+
+        el.addEventListener('pointerdown', event => {
+          event.stopPropagation();
+        });
+
+        el.addEventListener('click', event => {
+          event.stopPropagation();
+          handleLotSelection(id);
+        });
+
+        el.addEventListener('touchend', event => {
+          event.stopPropagation();
+          handleLotSelection(id);
+        }, { passive: true });
+      });
+    }
+
+    function renderAll() {
+      renderStatusGrid();
+      renderQuadraChips();
+      renderSelectionSummary();
+      renderLotsState();
+      renderDetails();
+    }
+
+    function handleLotSelection(id) {
+      state.selectedLotId = id;
+      state.selectedQuadra = dados[id].quadra;
+      renderAll();
+      focusLot(id);
+
+      if (window.innerWidth <= 768) {
+        document.querySelector('.panel')?.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    }
+
+    function showTooltip(event, lotId) {
+      const info = dados[lotId];
+      if (!info) return;
+
+      tooltip.style.display = 'block';
+      tooltip.style.left = `${event.clientX + 16}px`;
+      tooltip.style.top = `${event.clientY + 16}px`;
+      tooltip.innerHTML = `
+        <strong>${getLotDisplayName(lotId)}</strong><br>
+        Quadra ${info.quadra}<br>
+        Área: ${info.area}<br>
+        Preço: ${info.preco}<br>
+        Status: ${statusConfig[info.status]?.label || info.status}
+      `;
+    }
+
+    function hideTooltip() {
+      tooltip.style.display = 'none';
+    }
+
+    function applyTransform() {
+      svgStage.style.transform = `translate(${state.x}px, ${state.y}px) scale(${state.scale})`;
+    }
+
+    function clampPan() {
+      const mapWidth = SVG_WIDTH * state.scale;
+      const mapHeight = SVG_HEIGHT * state.scale;
+      const vw = viewport.clientWidth;
+      const vh = viewport.clientHeight;
+
+      if (mapWidth <= vw) {
+        state.x = (vw - mapWidth) / 2;
+      } else {
+        const minX = vw - mapWidth - 40;
+        const maxX = 40;
+        state.x = Math.min(maxX, Math.max(minX, state.x));
+      }
+
+      if (mapHeight <= vh) {
+        state.y = (vh - mapHeight) / 2;
+      } else {
+        const minY = vh - mapHeight - 40;
+        const maxY = 40;
+        state.y = Math.min(maxY, Math.max(minY, state.y));
+      }
+    }
+
+    function screenToWorld(clientX, clientY) {
+      const rect = viewport.getBoundingClientRect();
+      return {
+        x: (clientX - rect.left - state.x) / state.scale,
+        y: (clientY - rect.top - state.y) / state.scale
+      };
+    }
+
+    function zoomAt(clientX, clientY, nextScale) {
+      const clamped = Math.min(3, Math.max(0.35, nextScale));
+      const before = screenToWorld(clientX, clientY);
+
+      state.scale = clamped;
+      state.x = clientX - viewport.getBoundingClientRect().left - before.x * state.scale;
+      state.y = clientY - viewport.getBoundingClientRect().top - before.y * state.scale;
+
+      clampPan();
+      applyTransform();
+    }
+
+    function fitToBounds(bounds, padding = 70) {
+      const vw = viewport.clientWidth;
+      const vh = viewport.clientHeight;
+      const width = bounds.width + padding * 2;
+      const height = bounds.height + padding * 2;
+
+      state.scale = Math.min(vw / width, vh / height, 2.4);
+      state.x = (vw - bounds.width * state.scale) / 2 - bounds.x * state.scale;
+      state.y = (vh - bounds.height * state.scale) / 2 - bounds.y * state.scale;
+
+      clampPan();
+      applyTransform();
+    }
+
+    function getLotBounds(id) {
+      const el = document.getElementById(id);
+      if (!el) return null;
+      return el.getBBox();
+    }
+
+    function getUnionBounds(ids) {
+      const boxes = ids
+        .map(getLotBounds)
+        .filter(Boolean);
+
+      if (!boxes.length) return null;
+
+      const minX = Math.min(...boxes.map(b => b.x));
+      const minY = Math.min(...boxes.map(b => b.y));
+      const maxX = Math.max(...boxes.map(b => b.x + b.width));
+      const maxY = Math.max(...boxes.map(b => b.y + b.height));
+
+      return {
+        x: minX,
+        y: minY,
+        width: maxX - minX,
+        height: maxY - minY
+      };
+    }
+
+    function focusLot(lotId) {
+      const bounds = getLotBounds(lotId);
+      if (!bounds) return;
+      fitToBounds(bounds, 90);
+    }
+
+    function focusCurrentSelection() {
+      if (state.selectedLotId && dados[state.selectedLotId]) {
+        focusLot(state.selectedLotId);
+        return;
+      }
+
+      if (state.selectedQuadra !== 'TODAS') {
+        const ids = Object.keys(dados).filter(id => dados[id].quadra === state.selectedQuadra);
+        const bounds = getUnionBounds(ids);
+        if (bounds) {
+          fitToBounds(bounds, 110);
+          return;
+        }
+      }
+
+      const allBounds = getUnionBounds(lotIds);
+      if (allBounds) {
+        fitToBounds(allBounds, 120);
+      }
+    }
+
+    function initMapInteraction() {
+      viewport.addEventListener('wheel', event => {
+        event.preventDefault();
+        const delta = event.deltaY < 0 ? 1.14 : 0.88;
+        zoomAt(event.clientX, event.clientY, state.scale * delta);
+      }, { passive: false });
+
+      viewport.addEventListener('pointerdown', event => {
+        if (event.target.closest && event.target.closest('.map-lot')) {
+          return;
+        }
+
+        viewport.setPointerCapture(event.pointerId);
+        state.activePointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
+
+        if (state.activePointers.size === 1) {
+          state.dragging = true;
+          svgStage.classList.add('dragging');
+          state.dragStartX = event.clientX - state.x;
+          state.dragStartY = event.clientY - state.y;
+        } else if (state.activePointers.size === 2) {
+          const [a, b] = [...state.activePointers.values()];
+          state.dragging = false;
+          svgStage.classList.remove('dragging');
+          state.pinchStartDistance = Math.hypot(b.x - a.x, b.y - a.y);
+          state.pinchStartScale = state.scale;
+          const centerClientX = (a.x + b.x) / 2;
+          const centerClientY = (a.y + b.y) / 2;
+          state.pinchWorldCenter = screenToWorld(centerClientX, centerClientY);
+        }
+      });
+
+      viewport.addEventListener('pointermove', event => {
+        if (!state.activePointers.has(event.pointerId)) return;
+        state.activePointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
+
+        if (state.activePointers.size === 1 && state.dragging) {
+          state.x = event.clientX - state.dragStartX;
+          state.y = event.clientY - state.dragStartY;
+          clampPan();
+          applyTransform();
+        }
+
+        if (state.activePointers.size === 2) {
+          const [a, b] = [...state.activePointers.values()];
+          const distance = Math.hypot(b.x - a.x, b.y - a.y);
+          if (!state.pinchStartDistance) return;
+
+          const ratio = distance / state.pinchStartDistance;
+          const rect = viewport.getBoundingClientRect();
+          const centerClientX = (a.x + b.x) / 2;
+          const centerClientY = (a.y + b.y) / 2;
+
+          state.scale = Math.min(3, Math.max(0.35, state.pinchStartScale * ratio));
+          state.x = centerClientX - rect.left - state.pinchWorldCenter.x * state.scale;
+          state.y = centerClientY - rect.top - state.pinchWorldCenter.y * state.scale;
+
+          clampPan();
+          applyTransform();
+        }
+      });
+
+      function endPointer(pointerId) {
+        state.activePointers.delete(pointerId);
+        if (state.activePointers.size === 0) {
+          state.dragging = false;
+          svgStage.classList.remove('dragging');
+          state.pinchStartDistance = 0;
+        }
+      }
+
+      viewport.addEventListener('pointerup', event => endPointer(event.pointerId));
+      viewport.addEventListener('pointercancel', event => endPointer(event.pointerId));
+      viewport.addEventListener('pointerleave', event => endPointer(event.pointerId));
+    }
+
+    document.getElementById('zoomInBtn').addEventListener('click', () => {
+      const rect = viewport.getBoundingClientRect();
+      zoomAt(rect.left + rect.width / 2, rect.top + rect.height / 2, state.scale * 1.2);
+    });
+
+    document.getElementById('zoomOutBtn').addEventListener('click', () => {
+      const rect = viewport.getBoundingClientRect();
+      zoomAt(rect.left + rect.width / 2, rect.top + rect.height / 2, state.scale * 0.85);
+    });
+
+    document.getElementById('fitBtn').addEventListener('click', () => {
+      focusCurrentSelection();
+    });
+
+    document.getElementById('resetBtn').addEventListener('click', () => {
+      state.selectedLotId = null;
+      state.selectedQuadra = 'TODAS';
+      state.searchTerm = '';
+      searchInput.value = '';
+      renderAll();
+      focusCurrentSelection();
+    });
+
+    document.getElementById('clearSearchBtn').addEventListener('click', () => {
+      state.searchTerm = '';
+      searchInput.value = '';
+      buildSuggestions();
+      renderAll();
+      focusCurrentSelection();
+    });
+
+    searchInput.addEventListener('input', () => {
+      state.searchTerm = searchInput.value.trim();
+      buildSuggestions();
+      renderAll();
+    });
+
+    searchInput.addEventListener('keydown', event => {
+      if (event.key === 'Enter') {
+        const exact = Object.keys(dados).find(id => id.toLowerCase() === searchInput.value.trim().toLowerCase());
+        if (exact) {
+          suggestionsBox.style.display = 'none';
+          handleLotSelection(exact);
+        } else {
+          focusCurrentSelection();
+        }
+      }
+    });
+
+    document.addEventListener('click', event => {
+      if (!event.target.closest('.search-wrap')) {
+        suggestionsBox.style.display = 'none';
+      }
+    });
+
+    window.addEventListener('resize', () => {
+      clampPan();
+      applyTransform();
+    });
+
+    ensureLotClasses();
+    renderLotLabels();
+    attachLotEvents();
+    renderAll();
+    initMapInteraction();
+    focusCurrentSelection();
+  </script>
+</body>
+
+</html>
