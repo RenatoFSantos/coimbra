@@ -290,17 +290,19 @@ const css = `
     inset: 0;
     transform-origin: 0 0;
     cursor: grab;
-    will-change: transform;
   }
 
   .loteamento-wrap .svg-stage.dragging {
     cursor: grabbing;
+    will-change: transform;
   }
 
   .loteamento-wrap svg {
     width: 1040.84px;
     height: 1163.16px;
     display: block;
+    shape-rendering: geometricPrecision;
+    text-rendering: geometricPrecision;
   }
 
   .loteamento-wrap .map-title {
@@ -1179,7 +1181,7 @@ export default function LoteamentoPage() {
 
             <div className="viewport" id="viewport" aria-label="Área navegável do mapa">
               <div className="svg-stage" id="svgStage">
-                <svg id="mainSvg" viewBox="0 0 1040.84 1163.16" aria-label="Mapa SVG da Quadra A">
+                <svg id="mainSvg" viewBox="0 0 1040.84 1163.16" aria-label="Mapa SVG da Quadra A" shapeRendering="geometricPrecision" textRendering="geometricPrecision">
                   <rect x="0" y="0" width="1040.84" height="1163.16" fill="#eef4fb" />
 
                   <text className="map-title" x="620.42" y="72">QUADRA A</text>
