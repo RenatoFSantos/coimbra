@@ -184,13 +184,13 @@ export default function Home() {
       </section>
 
       {/* ── Mapa dos Lotes ────────────────────────────────────── */}
-      <section className="bg-white py-10 lg:py-16">
+      <section id="MapaInterativo" className="bg-white py-10 lg:py-16">
         <div
-          className="max-w-[1440px] mx-auto flex flex-col gap-8 px-4 md:px-8 lg:flex-row lg:gap-12 lg:items-start lg:px-[73px]"
+          className="max-w-[1440px] mx-auto flex flex-col gap-8 px-4 md:px-8 xl:flex-row xl:gap-12 xl:items-start xl:px-[73px]"
         >
           {/* Map diagram */}
           <div
-            className="relative flex-shrink-0 rounded-[44px] overflow-hidden w-full lg:w-[787px]"
+            className="relative flex-shrink-0 rounded-[44px] overflow-hidden w-full xl:w-[787px]"
             style={{ height: 'clamp(300px, 50vw, 652px)' }}
           >
             <Image
