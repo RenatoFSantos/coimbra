@@ -518,7 +518,6 @@ const css = `
   }
 
   @media (max-width: 768px) {
-    .loteamento-wrap { padding-bottom: 220px; }
     .loteamento-wrap .page { padding: 12px; gap: 14px; }
     .loteamento-wrap .map-card { padding: 14px; }
     .loteamento-wrap .header { flex-direction: column; }
@@ -526,15 +525,6 @@ const css = `
     .loteamento-wrap .btn { flex: 1 1 auto; text-align: center; }
     .loteamento-wrap .status-grid { grid-template-columns: repeat(3, 1fr); }
     .loteamento-wrap .viewport { min-height: 420px; height: 58vh; }
-    .loteamento-wrap .panel {
-      position: fixed;
-      left: 0; right: 0; bottom: 0;
-      z-index: 50;
-      border-radius: 22px 22px 0 0;
-      max-height: 48vh;
-      overflow: auto;
-    }
-    .loteamento-wrap .mobile-sheet-handle { display: block; }
   }
 
   @media (max-width: 560px) {
@@ -1249,14 +1239,13 @@ export default function LoteamentoPage() {
             </div>
           </section>
 
-          <aside className="card panel">
-            <div className="mobile-sheet-handle"></div>
+          <div className="card panel">
             <h2>Resumo e Detalhes</h2>
             <p>Selecione uma quadra ou um lote para visualizar as informações no painel fixo.</p>
             <div className="status-grid" id="statusGrid"></div>
             <div className="selection-summary" id="selectionSummary"></div>
             <div className="details-box" id="detailsBox"></div>
-          </aside>
+          </div>
         </div>
       </div>
 
