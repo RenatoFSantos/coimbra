@@ -501,6 +501,7 @@ const css = `
     pointer-events: none;
     font-size: 13px;
     line-height: 1.5;
+    color: black;
   }
 
   .loteamento-wrap .helper-text {
@@ -513,6 +514,7 @@ const css = `
   @media (max-width: 1100px) {
     .loteamento-wrap .page { grid-template-columns: 1fr; }
     .loteamento-wrap .panel { position: static; }
+    .loteamento-wrap .selection-summary { display: none; }
   }
 
   @media (max-width: 768px) {
@@ -1114,8 +1116,7 @@ export default function LoteamentoPage() {
       {/* ── Header (simplified: only VOLTAR) ─────────────────── */}
       <header className="bg-white">
         <nav
-          className="flex items-center max-w-[1440px] mx-auto"
-          style={{ height: 128, paddingLeft: 104, paddingRight: 104 }}
+          className="flex items-center max-w-[1440px] mx-auto h-16 px-4 md:px-8 lg:h-32 lg:px-[104px]"
         >
           <Image
             src={imgLogo}
@@ -1141,7 +1142,7 @@ export default function LoteamentoPage() {
           <section className="card map-card">
             <div className="header">
               <div>
-                <h1>Mapa Interativo do Loteamento</h1>
+                <p className="font-bold text-[#2b2a2a]" style={{ fontSize: 22 }}>Mapa Interativo do Loteamento</p>
                 <p>Grupo Coimbra</p>
               </div>
               <div className="counter-pill" id="counterPill">0 lotes no mapa</div>
@@ -1262,10 +1263,9 @@ export default function LoteamentoPage() {
       <div id="tooltip"></div>
 
       {/* ── Footer ────────────────────────────────────────────── */}
-      <footer className="bg-[#c6ddbb]" style={{ paddingTop: 64, paddingBottom: 64 }}>
+      <footer className="bg-[#c6ddbb] py-8 lg:py-16">
         <div
-          className="max-w-[1440px] mx-auto flex gap-24"
-          style={{ paddingLeft: 104, paddingRight: 104 }}
+          className="max-w-[1440px] mx-auto flex flex-col gap-8 px-4 md:px-8 md:flex-row md:flex-wrap lg:gap-24 lg:px-[104px]"
         >
           <div style={{ width: 207, flexShrink: 0 }}>
             <Image

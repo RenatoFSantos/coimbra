@@ -81,27 +81,10 @@ export default function Home() {
       style={{ fontFamily: "var(--font-montserrat), sans-serif" }}
     >
       {/* ── Hero + Navbar ─────────────────────────────────────── */}
-      <section
-        className="relative bg-[#fef7f2] overflow-hidden"
-        style={{ height: 906 }}
-      >
-        <div className="relative h-full max-w-[1440px] mx-auto">
-          {/* Background aerial photo */}
-          <Image
-            src={imgHeroBg}
-            alt="Vista aérea do loteamento"
-            width={1405}
-            height={791}
-            priority
-            className="absolute object-cover"
-            style={{ top: 115, left: 182 }}
-          />
-
+      <section className="bg-[#fef7f2] overflow-hidden">
+        <div className="max-w-[1440px] mx-auto">
           {/* Navbar */}
-          <nav
-            className="absolute top-0 left-0 right-0 flex items-center"
-            style={{ height: 128, paddingLeft: 104, paddingRight: 104 }}
-          >
+          <nav className="flex items-center h-16 px-4 md:px-8 lg:h-32 lg:px-[104px]">
             <Image
               src={imgLogo}
               alt="Coimbra"
@@ -109,18 +92,24 @@ export default function Home() {
               height={62}
               className="object-cover flex-shrink-0"
             />
-            <div className="flex items-center gap-10 mx-auto">
-              {["PRINCIPAL", "MAPA", "LOCALIZAÇÃO", "CONTATO"].map((item) => (
-                <a
-                  key={item}
-                  href="#"
+            <div className="hidden md:flex items-center gap-10 mx-auto">
+              {[
+                { label: "PRINCIPAL", href: "/" },
+                { label: "MAPA", href: "/loteamento" },
+                { label: "LOCALIZAÇÃO", href: "#" },
+                { label: "CONTATO", href: "#" },
+              ].map((item) => (
+                <Link
+                  key={item.label}
+                  href={item.href}
                   className="font-bold text-[#2b2a2a] hover:text-[#539f54]"
                   style={{ fontSize: 18 }}
                 >
-                  {item}
-                </a>
+                  {item.label}
+                </Link>
               ))}
             </div>
+            <div className="flex flex-1 md:flex-none" />
             <div className="flex items-center gap-5 flex-shrink-0">
               <Image
                 src={imgSearch}
@@ -147,51 +136,62 @@ export default function Home() {
             </div>
           </nav>
 
-          {/* Hero copy */}
-          <div className="absolute" style={{ left: 104, top: 309 }}>
-            <h1 className="text-[#2b2a2a]" style={{ fontSize: 68, lineHeight: 1.1 }}>
-              <span className="block font-medium">Realize seu</span>
-              <span>
-                <span className="font-extrabold">sonho </span>
-                <span className="font-medium">conosco</span>
-              </span>
-            </h1>
-            <p
-              className="font-bold text-[#34783d]"
-              style={{ fontSize: 18, lineHeight: 1.6, marginTop: 16, width: 413 }}
-            >
-              Explore a nova solução em moradia na cidade de Bicas-MG
-            </p>
-            <Link href="/loteamento">
-              <button
-                className="bg-[#0e413a] text-white font-semibold rounded-[8px]"
-                style={{ marginTop: 32, width: 215, height: 71, fontSize: 18 }}
+          {/* Hero body */}
+          <div className="relative flex flex-col md:flex-row md:items-end px-4 md:px-8 lg:px-[104px] pb-10 md:pb-16">
+            {/* Hero copy */}
+            <div className="relative z-10 py-8 md:py-0 md:mb-16 flex-shrink-0">
+              <h1 className="text-[#2b2a2a]" style={{ fontSize: 'clamp(36px, 5vw, 68px)', lineHeight: 1.1 }}>
+                <span className="block font-medium">Realize seu</span>
+                <span>
+                  <span className="font-extrabold">sonho </span>
+                  <span className="font-medium">conosco</span>
+                </span>
+              </h1>
+              <p
+                className="font-bold text-[#34783d]"
+                style={{ fontSize: 18, lineHeight: 1.6, marginTop: 16, maxWidth: 413 }}
               >
-                Mapa dos lotes
-              </button>
-            </Link>
-          </div>
+                Explore a nova solução em moradia na cidade de Bicas-MG
+              </p>
+              <Link href="/loteamento">
+                <button
+                  className="bg-[#0e413a] text-white font-semibold rounded-[8px]"
+                  style={{ marginTop: 32, width: 215, height: 71, fontSize: 18 }}
+                >
+                  Mapa dos lotes
+                </button>
+              </Link>
+            </div>
 
-          {/* Watermark label */}
-          <p
-            className="absolute font-bold text-white"
-            style={{ fontSize: 18, lineHeight: 1.6, bottom: 37, right: 196 }}
-          >
-            Imagem ilustrativa
-          </p>
+            {/* Background aerial photo */}
+            <div className="hidden md:block relative flex-1 ml-8" style={{ minHeight: 'clamp(280px, 40vw, 520px)' }}>
+              <Image
+                src={imgHeroBg}
+                alt="Vista aérea do loteamento"
+                fill
+                priority
+                className="object-cover object-left-top"
+              />
+              <p
+                className="absolute font-bold text-white"
+                style={{ fontSize: 14, bottom: 12, right: 16 }}
+              >
+                Imagem ilustrativa
+              </p>
+            </div>
+          </div>
         </div>
       </section>
 
       {/* ── Mapa dos Lotes ────────────────────────────────────── */}
-      <section className="bg-white" style={{ paddingTop: 64, paddingBottom: 64 }}>
+      <section className="bg-white py-10 lg:py-16">
         <div
-          className="max-w-[1440px] mx-auto flex gap-12 items-start"
-          style={{ paddingLeft: 73, paddingRight: 73 }}
+          className="max-w-[1440px] mx-auto flex flex-col gap-8 px-4 md:px-8 lg:flex-row lg:gap-12 lg:items-start lg:px-[73px]"
         >
           {/* Map diagram */}
           <div
-            className="relative flex-shrink-0 rounded-[44px] overflow-hidden"
-            style={{ width: 787, height: 652 }}
+            className="relative flex-shrink-0 rounded-[44px] overflow-hidden w-full lg:w-[787px]"
+            style={{ height: 'clamp(300px, 50vw, 652px)' }}
           >
             <Image
               src={imgMapDiagram}
@@ -257,13 +257,13 @@ export default function Home() {
             />
             <h2
               className="font-extrabold text-[#2b2a2a]"
-              style={{ fontSize: 40, lineHeight: 1.4, marginTop: 24, width: 514 }}
+              style={{ fontSize: 'clamp(24px, 4vw, 40px)', lineHeight: 1.4, marginTop: 24, maxWidth: 514 }}
             >
               Clique nos lotes para saber mais informações
             </h2>
             <p
               className="font-bold text-[#34783d]"
-              style={{ fontSize: 18, lineHeight: 1.6, marginTop: 16, width: 514 }}
+              style={{ fontSize: 18, lineHeight: 1.6, marginTop: 16, maxWidth: 514 }}
             >
               Temos diversas opções disponíveis, não perca tempo, garanta já o seu!
             </p>
@@ -280,14 +280,13 @@ export default function Home() {
       </section>
 
       {/* ── Porque nos escolher ───────────────────────────────── */}
-      <section className="bg-white" style={{ paddingTop: 80, paddingBottom: 80 }}>
+      <section className="bg-white py-10 lg:py-20">
         <div
-          className="max-w-[1440px] mx-auto"
-          style={{ paddingLeft: 104, paddingRight: 104 }}
+          className="max-w-[1440px] mx-auto px-4 md:px-8 lg:px-[104px]"
         >
           <h2
             className="text-center font-extrabold text-[#2b2a2a]"
-            style={{ fontSize: 40, lineHeight: 1.4 }}
+            style={{ fontSize: 'clamp(26px, 4vw, 40px)', lineHeight: 1.4 }}
           >
             Porque nos escolher?
           </h2>
@@ -298,7 +297,7 @@ export default function Home() {
             Tenha a melhor experiência em loteamentos do mercado!
           </p>
           <div
-            className="grid grid-cols-4 gap-6"
+            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6"
             style={{ marginTop: 48 }}
           >
             {whyCards.map((card) => (
@@ -331,7 +330,7 @@ export default function Home() {
                 </p>
                 <p
                   className="font-semibold text-[#34783d]"
-                  style={{ fontSize: 16, lineHeight: 1.3, marginTop: 8, width: 227 }}
+                  style={{ fontSize: 16, lineHeight: 1.3, marginTop: 8 }}
                 >
                   {card.desc}
                 </p>
@@ -342,18 +341,17 @@ export default function Home() {
       </section>
 
       {/* ── Depoimentos ───────────────────────────────────────── */}
-      <section className="bg-white" style={{ paddingTop: 80, paddingBottom: 80 }}>
+      <section className="bg-white py-10 lg:py-20">
         <div
-          className="max-w-[1440px] mx-auto"
-          style={{ paddingLeft: 104, paddingRight: 104 }}
+          className="max-w-[1440px] mx-auto px-4 md:px-8 lg:px-[104px]"
         >
           <h2
             className="text-center font-extrabold text-[#2b2a2a] mx-auto"
-            style={{ fontSize: 40, lineHeight: 1.4, width: 720 }}
+            style={{ fontSize: 'clamp(26px, 4vw, 40px)', lineHeight: 1.4, maxWidth: 720 }}
           >
             Veja a opinião de quem já fez parte desse sonho!
           </h2>
-          <div className="grid grid-cols-3 gap-6" style={{ marginTop: 48 }}>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" style={{ marginTop: 48 }}>
             {reviews.map((review) => (
               <div
                 key={review.name}
@@ -423,7 +421,6 @@ export default function Home() {
                       fontSize: 16,
                       lineHeight: 1.3,
                       marginTop: 16,
-                      width: 334,
                     }}
                   >
                     Texto de exemplo sobre a opinião de um cliente real que já
@@ -461,21 +458,19 @@ export default function Home() {
 
       {/* ── Contato / FAQ ─────────────────────────────────────── */}
       <section
-        className="bg-[#f3fef2]"
-        style={{ paddingTop: 80, paddingBottom: 80 }}
+        className="bg-[#f3fef2] py-10 lg:py-20"
       >
         <div
-          className="max-w-[1440px] mx-auto"
-          style={{ paddingLeft: 104, paddingRight: 104 }}
+          className="max-w-[1440px] mx-auto px-4 md:px-8 lg:px-[104px]"
         >
           <h2
             className="text-center font-extrabold text-[#2b2a2a] mx-auto"
-            style={{ fontSize: 40, lineHeight: 1.4, width: 666 }}
+            style={{ fontSize: 'clamp(26px, 4vw, 40px)', lineHeight: 1.4, maxWidth: 666 }}
           >
             Tem alguma pergunta? Entre em contato conosco!
           </h2>
           <div
-            className="flex items-center justify-center gap-20"
+            className="flex flex-col items-center gap-4 md:flex-row md:justify-center md:gap-20"
             style={{ marginTop: 40 }}
           >
             <div className="flex items-center gap-2">
@@ -499,13 +494,13 @@ export default function Home() {
           </div>
           {/* Email form */}
           <div
-            className="flex justify-center gap-4"
+            className="flex flex-col items-stretch gap-4 sm:flex-row sm:justify-center"
             style={{ marginTop: 40 }}
           >
             <div
-              className="bg-[#c1ddbb] rounded-[8px] flex items-center gap-3"
+              className="bg-[#c1ddbb] rounded-[8px] flex items-center gap-3 flex-1 sm:flex-none"
               style={{
-                width: 505,
+                maxWidth: 505,
                 height: 58,
                 padding: "0 16px",
                 boxShadow: "0px 4px 30px 0px rgba(43,27,18,0.12)",
@@ -530,13 +525,12 @@ export default function Home() {
       </section>
 
       {/* ── Footer ────────────────────────────────────────────── */}
-      <footer className="bg-[#c6ddbb]" style={{ paddingTop: 64, paddingBottom: 64 }}>
+      <footer className="bg-[#c6ddbb] py-8 lg:py-16">
         <div
-          className="max-w-[1440px] mx-auto flex gap-24"
-          style={{ paddingLeft: 104, paddingRight: 104 }}
+          className="max-w-[1440px] mx-auto flex flex-col gap-8 px-4 md:px-8 md:flex-row md:flex-wrap lg:gap-24 lg:px-[104px]"
         >
           {/* Logo + tagline */}
-          <div style={{ width: 207, flexShrink: 0 }}>
+          <div className="flex-shrink-0">
             <Image
               src={imgLogo}
               alt="Coimbra"
@@ -546,7 +540,7 @@ export default function Home() {
             />
             <p
               className="font-bold text-[#34783d]"
-              style={{ fontSize: 18, lineHeight: 1.3, marginTop: 16, width: 219 }}
+              style={{ fontSize: 18, lineHeight: 1.3, marginTop: 16, maxWidth: 219 }}
             >
               Trazendo o melhor do morar, para mais perto de você!
             </p>
